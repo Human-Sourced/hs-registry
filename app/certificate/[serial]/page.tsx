@@ -1,7 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 
-type PageProps = { params: { serial: string } };
-
 type CertRow = {
   serial: string;
   org_name: string;
@@ -9,8 +7,13 @@ type CertRow = {
   issued_at: string; // ISO
 };
 
-export default async function CertificatePage({ params }: PageProps) {
-  const { serial } = params;
+export default async function CertificatePage({
+  params,
+}: {
+  params: Promise<{ serial: string }>;
+}) {
+  // Next 15: params is a Promise
+  const { serial } = await params;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -45,7 +48,7 @@ export default async function CertificatePage({ params }: PageProps) {
         <div><strong>Issued:</strong> {new Date(data.issued_at).toLocaleString()}</div>
       </section>
 
-      {/* The <img> warnings are informational; not build blockers */}
+      {/* These are fine as <img> for now; warnings only */}
       <img alt="Verification Badge" src={badgeUrl} width={240} height={240} />
       <img alt="QR Code" src={qrUrl} width={240} height={240} />
     </main>
