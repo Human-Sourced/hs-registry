@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import QRCode from 'qrcode';
 
-type RouteParams = { params: { serial: string } };
-
-export async function GET(_req: Request, { params }: RouteParams) {
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { serial: string } }
+) {
   const { serial } = params;
   if (!serial) {
     return new NextResponse('serial is required', { status: 400 });
@@ -20,7 +21,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
     scale: 6,
   });
 
-  // Make a fresh Uint8Array copy to avoid SharedArrayBuffer typing
+  // Fresh Uint8Array (valid BodyInit, avoids SharedArrayBuffer typing)
   const bytes = Uint8Array.from(pngBuffer);
 
   return new NextResponse(bytes, {
