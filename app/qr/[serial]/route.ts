@@ -1,27 +1,33 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import QRCode from 'qrcode';
 
-// Ensure Node.js runtime (not Edge), since we use a Node package
-export const runtime = 'nodejs';
+type RouteParams = { params: { serial: string } };
 
-export async function GET(
-  req: NextRequest,
-  ctx: { params: Promise<{ serial: string }> }
-) {
-  const { serial } = await ctx.params;
-  const origin = new URL(req.url).origin;
-  const target = `${origin}/certificate/${encodeURIComponent(serial.replace(/\.png$/i, ''))}`;
+export async function GET(_req: Request, { params }: RouteParams) {
+  const { serial } = params;
+  if (!serial) {
+    return new NextResponse('serial is required', { status: 400 });
+  }
 
-  // Dynamic import avoids TS type resolution issues
-  const QRCode: any = await import('qrcode');
+  const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
+  const url = `${base}/certificate/${encodeURIComponent(serial)}`;
 
-  // toBuffer() gives a Node Buffer; convert to Uint8Array for Response body
-  const buf: Buffer = await QRCode.toBuffer(target, { margin: 1, width: 300 });
-  const bytes = new Uint8Array(buf); // <-- BodyInit-friendly
+  // Generate PNG as a Node Buffer
+  const pngBuffer = await QRCode.toBuffer(url, {
+    type: 'png',
+    errorCorrectionLevel: 'M',
+    margin: 1,
+    scale: 6,
+  });
+
+  // Make a fresh Uint8Array copy to avoid SharedArrayBuffer typing
+  const bytes = Uint8Array.from(pngBuffer);
 
   return new NextResponse(bytes, {
+    status: 200,
     headers: {
       'Content-Type': 'image/png',
-      'Cache-Control': 'max-age=86400, s-maxage=86400'
-    }
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    },
   });
 }
