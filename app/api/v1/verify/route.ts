@@ -1,41 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
-type OrgLite = { public_name?: string | null; website?: string | null } | null;
+type CertRow = {
+  serial: string;
+  org_name: string;
+  status: 'active' | 'revoked' | 'expired';
+  issued_at: string; // ISO string
+};
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const serial = searchParams.get('serial');
-  if (!serial) return NextResponse.json({ error: 'serial required' }, { status: 400 });
+  const url = new URL(req.url);
+  const serial = url.searchParams.get('serial');
+  if (!serial) {
+    return NextResponse.json({ error: 'serial is required' }, { status: 400 });
+  }
 
-  const supabase = supabaseServer();
-  const { data: cert, error } = await supabase
-    .from('certifications')
-    .select(`
-      serial_id, status, tier, standard_version, issued_at, expires_at, disclosure_summary,
-      organizations ( public_name, website )
-    `)
-    .eq('serial_id', serial)
-    .single();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const supabase = createClient(supabaseUrl, serviceKey);
 
-  if (error || !cert) return NextResponse.json({ error: 'not found' }, { status: 404 });
+  const { data, error } = await supabase
+    .from('certificates')
+    .select('*')
+    .eq('serial', serial)
+    .maybeSingle<CertRow>();
 
-  // Normalize organizations: it might come back as an array or an object
-  const orgField = (cert as any).organizations as OrgLite | OrgLite[] | undefined;
-  const org: OrgLite = Array.isArray(orgField) ? (orgField[0] ?? null) : (orgField ?? null);
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  if (!data) {
+    return NextResponse.json({ valid: false, serial }, { status: 404 });
+  }
 
   return NextResponse.json({
-    serial_id: cert.serial_id,
-    status: cert.status,
-    tier: cert.tier,
-    standard_version: cert.standard_version,
-    issued_at: cert.issued_at,
-    expires_at: cert.expires_at,
-    organization: {
-      public_name: org?.public_name ?? null,
-      website: org?.website ?? null
-    },
-    disclosure_summary: cert.disclosure_summary,
-    last_verified_at: new Date().toISOString()
+    valid: data.status === 'active',
+    serial: data.serial,
+    org: data.org_name,
+    status: data.status,
+    issued_at: data.issued_at,
   });
 }
