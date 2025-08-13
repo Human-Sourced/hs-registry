@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import QRCode from 'qrcode';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ serial: string }> }
 ) {
-  // Next 15: params is a Promise
   const { serial } = await params;
   if (!serial) {
     return new NextResponse('serial is required', { status: 400 });
@@ -14,7 +15,6 @@ export async function GET(
   const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
   const url = `${base}/certificate/${encodeURIComponent(serial)}`;
 
-  // Generate PNG buffer
   const pngBuffer = await QRCode.toBuffer(url, {
     type: 'png',
     errorCorrectionLevel: 'M',
@@ -22,7 +22,6 @@ export async function GET(
     scale: 6,
   });
 
-  // Convert Buffer -> fresh Uint8Array (valid BodyInit)
   const bytes = Uint8Array.from(pngBuffer);
 
   return new NextResponse(bytes, {

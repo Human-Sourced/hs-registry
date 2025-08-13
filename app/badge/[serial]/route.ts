@@ -1,52 +1,39 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase';
+import { NextResponse } from 'next/server';
+import { getServerSupabase } from '@/lib/supabase';
 
-const colors: Record<string, string> = {
-  ACTIVE: '#16a34a',
-  CONDITIONAL: '#ca8a04',
-  EXPIRED: '#6b7280',
-  SUSPENDED: '#ef4444',
-  REVOKED: '#991b1b',
-};
+export const dynamic = 'force-dynamic';
 
 export async function GET(
-  _req: NextRequest,
-  ctx: { params: Promise<{ serial: string }> } // <-- async params in Next 15
+  _req: Request,
+  { params }: { params: Promise<{ serial: string }> }
 ) {
-  const { serial } = await ctx.params; // must await
-  // If user visited /badge/<serial>.svg, strip the extension
-  const cleanSerial = serial.replace(/\.svg$/i, '');
+  const { serial } = await params;
 
-  console.log('badge lookup for:', cleanSerial);
+  const supabase = getServerSupabase();
+  const { data, error } = await supabase
+    .from('certificates')
+    .select('status, org_name')
+    .eq('serial', serial)
+    .maybeSingle();
 
-  const supabase = supabaseServer();
-  const { data: cert, error } = await supabase
-    .from('certifications')
-    .select('serial_id,status,tier')
-    .eq('serial_id', cleanSerial)
-    .single();
+  // Simple badge (green for active, gray otherwise)
+  const valid = !!data && data.status === 'active';
+  const label = valid ? 'Valid' : 'Not Valid';
+  const color = valid ? '#22c55e' : '#9ca3af';
 
-  if (error) console.error('supabase error:', error);
-
-  if (!cert) {
-    console.warn('no cert found for:', cleanSerial);
-    return new NextResponse('not found', { status: 404 });
-  }
-
-  const fill = colors[cert.status] ?? '#6b7280';
-  const label = `Human-Sourced • ${cert.tier.replace('_', '-')} • ${cert.status}`;
-
-  const svg = `
-<svg xmlns="http://www.w3.org/2000/svg" width="460" height="38" role="img" aria-label="${label}">
-  <rect rx="6" width="460" height="38" fill="${fill}"/>
-  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
-        fill="#fff" font-family="ui-sans-serif, system-ui" font-size="14">${label}</text>
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="80" role="img" aria-label="Human‑Sourced: ${label}">
+  <rect width="300" height="80" rx="12" fill="${color}"/>
+  <text x="150" y="48" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="22" fill="#fff">
+    Human‑Sourced: ${label}
+  </text>
 </svg>`;
 
   return new NextResponse(svg, {
+    status: 200,
     headers: {
-      'Content-Type': 'image/svg+xml',
-      'Cache-Control': 'max-age=60, s-maxage=300, stale-while-revalidate=600',
+      'Content-Type': 'image/svg+xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=300, s-maxage=300',
     },
   });
 }

@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getServerSupabase } from '@/lib/supabase';
+
+export const dynamic = 'force-dynamic';
 
 type CertRow = {
   serial: string;
   org_name: string;
   status: 'active' | 'revoked' | 'expired';
-  issued_at: string; // ISO string
+  issued_at: string;
 };
 
 export async function GET(req: NextRequest) {
@@ -15,10 +17,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'serial is required' }, { status: 400 });
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  const supabase = createClient(supabaseUrl, serviceKey);
-
+  const supabase = getServerSupabase();
   const { data, error } = await supabase
     .from('certificates')
     .select('*')
