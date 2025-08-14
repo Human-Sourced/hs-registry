@@ -3,12 +3,13 @@ import { getServerSupabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-// Shape exposed by the VIEW public.certificates
+// Row shape exposed by the VIEW public.certificates
 type CertView = {
-  status: string;                 // already lowercase via the view
+  status: string | null;     // lowercased in the view
   org_name: string | null;
-  issued_at: string | null;       // ISO string
-  expires_at?: string | null;     // optional: include only if your view added it
+  issued_at: string | null;  // ISO string
+  // If you later add `expires_at` to the view, just add:
+  // expires_at?: string | null;
 };
 
 export async function GET(
@@ -19,26 +20,20 @@ export async function GET(
 
   const supabase = getServerSupabase();
 
+  // Let Supabase infer the response type; ask only for columns that exist in the view
   const { data, error } = await supabase
-    .from('certificates') // <-- the VIEW, not base table
-    .select('status, org_name, issued_at, expires_at')
+    .from('certificates') // <-- the VIEW
+    .select('status, org_name, issued_at')
     .eq('serial', serial)
     .maybeSingle<CertView>();
 
-  // Default to not valid if missing/error
+  // Default to not valid
   let valid = false;
 
   if (!error && data) {
-    const status = (data.status ?? '').toLowerCase();
-    valid = status === 'active';
-
-    // Optional expiry check if the view exposes expires_at
-    if (typeof data.expires_at === 'string' && data.expires_at.length > 0) {
-      const exp = new Date(data.expires_at);
-      if (!Number.isNaN(exp.getTime()) && exp <= new Date()) {
-        valid = false;
-      }
-    }
+    const statusLower = (data.status ?? '').toLowerCase();
+    valid = statusLower === 'active';
+    // If you add expires_at in the view later, you can gate here too.
   }
 
   const label = valid ? 'Valid' : 'Not Valid';
