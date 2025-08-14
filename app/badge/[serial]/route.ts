@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 type CertView = {
   status: string | null;
@@ -19,7 +20,8 @@ export async function GET(
   let supabase;
   try {
     supabase = getServerSupabase();
-  } catch (e: any) {
+  } catch {
+    // no unused variable; no `any`
     return new NextResponse(
       `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="420" height="80" role="img" aria-label="Human‑Sourced: Error">
@@ -59,7 +61,6 @@ export async function GET(
 
   const statusLower = (data?.status ?? '').toLowerCase();
   const valid = statusLower === 'active';
-
   const label = valid ? 'Valid' : 'Not Valid';
   const color = valid ? '#22c55e' : '#9ca3af';
 

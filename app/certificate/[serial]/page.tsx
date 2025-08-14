@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { getServerSupabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
@@ -19,7 +20,7 @@ export default async function CertificatePage({
   let supabase;
   try {
     supabase = getServerSupabase();
-  } catch (e: any) {
+  } catch {
     return (
       <main className="p-8">
         <h1 className="text-2xl font-semibold">Configuration error</h1>
@@ -64,8 +65,10 @@ export default async function CertificatePage({
         <div><strong>Status:</strong> {data.status}</div>
         <div><strong>Issued:</strong> {new Date(data.issued_at).toLocaleString()}</div>
       </section>
-      <img alt="Verification Badge" src={badgeUrl} width={240} height={240} />
-      <img alt="QR Code" src={qrUrl} width={240} height={240} />
+
+      {/* Using Next/Image to satisfy lint rule */}
+      <Image alt="Verification Badge" src={badgeUrl} width={240} height={240} />
+      <Image alt="QR Code" src={qrUrl} width={240} height={240} />
     </main>
   );
 }

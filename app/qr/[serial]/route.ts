@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import QRCode from 'qrcode';
 
 export const dynamic = 'force-dynamic';
-// Ensure Node runtime for the 'qrcode' package.
 export const runtime = 'nodejs';
 
 export async function GET(
@@ -12,25 +11,19 @@ export async function GET(
   const raw = params.serial ?? '';
   const serial = decodeURIComponent(raw).replace(/\.png$/i, '');
 
-  if (!serial) {
-    return new NextResponse('serial is required', { status: 400 });
-  }
+  if (!serial) return new NextResponse('serial is required', { status: 400 });
 
   const base = process.env.NEXT_PUBLIC_BASE_URL;
-  if (!base) {
-    return new NextResponse('BASE_URL not configured', { status: 500 });
-  }
+  if (!base) return new NextResponse('BASE_URL not configured', { status: 500 });
 
   const url = `${base}/certificate/${encodeURIComponent(serial)}`;
-
-  // qrcode returns a Node Buffer — convert to Uint8Array for fetch/Response
   const pngBuffer = await QRCode.toBuffer(url, {
     type: 'png',
     errorCorrectionLevel: 'M',
     margin: 1,
     scale: 6,
   });
-  const bytes = new Uint8Array(pngBuffer); // <-- fixes TS2345
+  const bytes = new Uint8Array(pngBuffer);
 
   return new NextResponse(bytes, {
     status: 200,
