@@ -6,9 +6,9 @@ export const runtime = 'nodejs';
 
 export async function GET(
   _req: Request,
-  { params }: { params: { serial: string } }
+  { params }: { params: Record<string, string | string[]> }
 ) {
-  const raw = params.serial ?? '';
+  const raw = Array.isArray(params.serial) ? params.serial[0] : (params.serial ?? '');
   const serial = decodeURIComponent(raw).replace(/\.png$/i, '');
 
   if (!serial) return new NextResponse('serial is required', { status: 400 });

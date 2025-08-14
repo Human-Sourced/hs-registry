@@ -12,9 +12,9 @@ type CertView = {
 
 export async function GET(
   _req: Request,
-  { params }: { params: { serial: string } }
+  { params }: { params: Record<string, string | string[]> }
 ) {
-  const raw = params.serial ?? '';
+  const raw = Array.isArray(params.serial) ? params.serial[0] : (params.serial ?? '');
   const serial = decodeURIComponent(raw).replace(/\.svg$/i, '');
 
   let supabase;
