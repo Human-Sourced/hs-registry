@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
@@ -10,8 +10,11 @@ type CertView = {
   issued_at: string | null;
 };
 
-export async function GET(req: NextRequest, context: { params: { serial: string } }) {
-  const raw = context.params.serial ?? '';
+export async function GET(
+  _req: Request,
+  { params }: { params: { serial: string } }
+) {
+  const raw = params.serial ?? '';
   const serial = decodeURIComponent(raw).replace(/\.svg$/i, '');
 
   let supabase;

@@ -1,11 +1,14 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import QRCode from 'qrcode';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export async function GET(req: NextRequest, context: { params: { serial: string } }) {
-  const raw = context.params.serial ?? '';
+export async function GET(
+  _req: Request,
+  { params }: { params: { serial: string } }
+) {
+  const raw = params.serial ?? '';
   const serial = decodeURIComponent(raw).replace(/\.png$/i, '');
 
   if (!serial) return new NextResponse('serial is required', { status: 400 });
@@ -22,6 +25,7 @@ export async function GET(req: NextRequest, context: { params: { serial: string 
     scale: 6,
   });
 
+  // Convert Node Buffer -> TypedArray for Web Response
   const bytes = new Uint8Array(pngBuffer);
 
   return new NextResponse(bytes, {
