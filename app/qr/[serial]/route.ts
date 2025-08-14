@@ -7,7 +7,10 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ serial: string }> }
 ) {
-  const { serial } = await params;
+  const { serial: raw } = await params;
+  // Handle requests like /qr/HS-...-000001.png → strip the extension
+  const serial = decodeURIComponent(raw).replace(/\.png$/i, '');
+
   if (!serial) {
     return new NextResponse('serial is required', { status: 400 });
   }
@@ -28,7 +31,9 @@ export async function GET(
     status: 200,
     headers: {
       'Content-Type': 'image/png',
-      'Cache-Control': 'public, max-age=31536000, immutable',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      Pragma: 'no-cache',
+      Expires: '0',
     },
   });
 }

@@ -3,12 +3,11 @@ import { getServerSupabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-// Row shape exposed by the VIEW public.certificates
 type CertView = {
-  status: string | null;      // lowercased via the view
+  status: string | null;     // lowercased via the view
   org_name: string | null;
-  issued_at: string | null;   // ISO string
-  // If you later add expires_at to the view, uncomment the next line and include it in .select(...):
+  issued_at: string | null;  // ISO string
+  // If you later add expires_at to the view, add it here and in .select(...)
   // expires_at: string | null;
 };
 
@@ -16,24 +15,24 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ serial: string }> }
 ) {
-  const { serial } = await params;
+  const { serial: raw } = await params;
+  // Handle requests like /badge/HS-...-000001.svg  → strip the extension
+  const serial = decodeURIComponent(raw).replace(/\.svg$/i, '');
 
   const supabase = getServerSupabase();
 
   const { data, error } = await supabase
-    .from('certificates') // <-- the VIEW, not the base table
-    .select('status, org_name, issued_at') // add 'expires_at' here if you expose it in the view
+    .from('certificates')                 // the VIEW
+    .select('status, org_name, issued_at')// add 'expires_at' if your view exposes it
     .eq('serial', serial)
     .maybeSingle<CertView>();
 
-  // Default to not valid
   let valid = false;
-
   if (!error && data) {
     const statusLower = (data.status ?? '').toLowerCase();
     valid = statusLower === 'active';
 
-    // If you add expires_at later, gate validity here too:
+    // If you later add expires_at, gate here too:
     // if (data.expires_at) {
     //   const exp = new Date(data.expires_at);
     //   if (!Number.isNaN(exp.getTime()) && exp <= new Date()) valid = false;
@@ -55,7 +54,10 @@ export async function GET(
     status: 200,
     headers: {
       'Content-Type': 'image/svg+xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=60, s-maxage=60',
+      // Disable caching while we iterate; you can relax later
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      Pragma: 'no-cache',
+      Expires: '0',
     },
   });
 }
