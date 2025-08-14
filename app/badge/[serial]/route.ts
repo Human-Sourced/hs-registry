@@ -10,11 +10,10 @@ type CertView = {
   issued_at: string | null;
 };
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Record<string, string | string[]> }
-) {
-  const raw = Array.isArray(params.serial) ? params.serial[0] : (params.serial ?? '');
+export async function GET(req: Request) {
+  // Example path: /badge/HS-C-2025-000001.svg or /badge/HS-C-2025-000001
+  const url = new URL(req.url);
+  const raw = url.pathname.split('/').pop() ?? '';
   const serial = decodeURIComponent(raw).replace(/\.svg$/i, '');
 
   let supabase;

@@ -4,11 +4,10 @@ import QRCode from 'qrcode';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Record<string, string | string[]> }
-) {
-  const raw = Array.isArray(params.serial) ? params.serial[0] : (params.serial ?? '');
+export async function GET(req: Request) {
+  // Example path: /qr/HS-C-2025-000001.png or /qr/HS-C-2025-000001
+  const url = new URL(req.url);
+  const raw = url.pathname.split('/').pop() ?? '';
   const serial = decodeURIComponent(raw).replace(/\.png$/i, '');
 
   if (!serial) return new NextResponse('serial is required', { status: 400 });
@@ -16,9 +15,9 @@ export async function GET(
   const base = process.env.NEXT_PUBLIC_BASE_URL;
   if (!base) return new NextResponse('BASE_URL not configured', { status: 500 });
 
-  const url = `${base}/certificate/${encodeURIComponent(serial)}`;
+  const target = `${base}/certificate/${encodeURIComponent(serial)}`;
 
-  const pngBuffer = await QRCode.toBuffer(url, {
+  const pngBuffer = await QRCode.toBuffer(target, {
     type: 'png',
     errorCorrectionLevel: 'M',
     margin: 1,
