@@ -6,16 +6,18 @@ export const dynamic = 'force-dynamic';
 type CertRow = {
   serial: string;
   org_name: string;
-  status: 'active' | 'revoked' | 'expired' | 'conditional' | 'suspended';
+  // keep status flexible because the view lower-cases enum values
+  status: string; // 'active' | 'revoked' | 'expired' | 'conditional' | 'suspended'
   issued_at: string;
 };
 
 export default async function CertificatePage({
   params,
 }: {
-  params: { serial: string };
+  // <-- Next 15 in your setup expects params as a Promise
+  params: Promise<{ serial: string }>;
 }) {
-  const serial = decodeURIComponent(params.serial ?? '');
+  const { serial } = await params;
 
   let supabase;
   try {
@@ -39,7 +41,7 @@ export default async function CertificatePage({
     return (
       <main className="p-8">
         <h1 className="text-2xl font-semibold">Database error</h1>
-        <p className="mt-2 text-gray-500">{String(error.message ?? error)}</p>
+        <p className="mt-2 text-gray-500">{String((error as any).message ?? error)}</p>
       </main>
     );
   }
