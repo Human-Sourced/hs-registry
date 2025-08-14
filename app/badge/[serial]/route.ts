@@ -4,40 +4,61 @@ import { getServerSupabase } from '@/lib/supabase';
 export const dynamic = 'force-dynamic';
 
 type CertView = {
-  status: string | null;     // lowercased via the view
+  status: string | null;
   org_name: string | null;
-  issued_at: string | null;  // ISO string
-  // If you later add expires_at to the view, add it here and in .select(...)
-  // expires_at: string | null;
+  issued_at: string | null;
 };
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ serial: string }> }
+  { params }: { params: { serial: string } }
 ) {
-  const { serial: raw } = await params;
-  // Handle requests like /badge/HS-...-000001.svg  → strip the extension
+  const raw = params.serial ?? '';
   const serial = decodeURIComponent(raw).replace(/\.svg$/i, '');
 
-  const supabase = getServerSupabase();
+  let supabase;
+  try {
+    supabase = getServerSupabase();
+  } catch (e: any) {
+    return new NextResponse(
+      `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="80" role="img" aria-label="Human‑Sourced: Error">
+  <rect width="420" height="80" rx="12" fill="#ef4444"/>
+  <text x="210" y="48" text-anchor="middle" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif" font-size="18" fill="#fff">
+    Human‑Sourced: Config error (Supabase env vars)
+  </text>
+</svg>`,
+      {
+        status: 500,
+        headers: { 'Content-Type': 'image/svg+xml; charset=utf-8', 'Cache-Control': 'no-store' },
+      }
+    );
+  }
 
   const { data, error } = await supabase
-    .from('certificates')                 // the VIEW
-    .select('status, org_name, issued_at')// add 'expires_at' if your view exposes it
+    .from('certificates')
+    .select('status, org_name, issued_at')
     .eq('serial', serial)
     .maybeSingle<CertView>();
 
-  let valid = false;
-  if (!error && data) {
-    const statusLower = (data.status ?? '').toLowerCase();
-    valid = statusLower === 'active';
-
-    // If you later add expires_at, gate here too:
-    // if (data.expires_at) {
-    //   const exp = new Date(data.expires_at);
-    //   if (!Number.isNaN(exp.getTime()) && exp <= new Date()) valid = false;
-    // }
+  if (error) {
+    return new NextResponse(
+      `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="80" role="img" aria-label="Human‑Sourced: Error">
+  <rect width="420" height="80" rx="12" fill="#f59e0b"/>
+  <text x="210" y="48" text-anchor="middle" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif" font-size="18" fill="#fff">
+    Human‑Sourced: DB error
+  </text>
+</svg>`,
+      {
+        status: 502,
+        headers: { 'Content-Type': 'image/svg+xml; charset=utf-8', 'Cache-Control': 'no-store' },
+      }
+    );
   }
+
+  const statusLower = (data?.status ?? '').toLowerCase();
+  const valid = statusLower === 'active';
 
   const label = valid ? 'Valid' : 'Not Valid';
   const color = valid ? '#22c55e' : '#9ca3af';
@@ -54,7 +75,6 @@ export async function GET(
     status: 200,
     headers: {
       'Content-Type': 'image/svg+xml; charset=utf-8',
-      // Disable caching while we iterate; you can relax later
       'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
       Pragma: 'no-cache',
       Expires: '0',

@@ -5,23 +5,43 @@ export const dynamic = 'force-dynamic';
 type CertRow = {
   serial: string;
   org_name: string;
-  status: 'active' | 'revoked' | 'expired';
+  status: 'active' | 'revoked' | 'expired' | 'conditional' | 'suspended';
   issued_at: string;
 };
 
 export default async function CertificatePage({
   params,
 }: {
-  params: Promise<{ serial: string }>;
+  params: { serial: string };
 }) {
-  const { serial } = await params;
+  const serial = decodeURIComponent(params.serial ?? '');
 
-  const supabase = getServerSupabase();
-  const { data } = await supabase
+  let supabase;
+  try {
+    supabase = getServerSupabase();
+  } catch (e: any) {
+    return (
+      <main className="p-8">
+        <h1 className="text-2xl font-semibold">Configuration error</h1>
+        <p className="mt-2 text-gray-500">Supabase env vars are missing.</p>
+      </main>
+    );
+  }
+
+  const { data, error } = await supabase
     .from('certificates')
     .select('*')
     .eq('serial', serial)
     .maybeSingle<CertRow>();
+
+  if (error) {
+    return (
+      <main className="p-8">
+        <h1 className="text-2xl font-semibold">Database error</h1>
+        <p className="mt-2 text-gray-500">{String(error.message ?? error)}</p>
+      </main>
+    );
+  }
 
   if (!data) {
     return (
