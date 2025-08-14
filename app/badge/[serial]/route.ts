@@ -5,11 +5,11 @@ export const dynamic = 'force-dynamic';
 
 // Row shape exposed by the VIEW public.certificates
 type CertView = {
-  status: string | null;     // lowercased in the view
+  status: string | null;      // lowercased via the view
   org_name: string | null;
-  issued_at: string | null;  // ISO string
-  // If you later add `expires_at` to the view, just add:
-  // expires_at?: string | null;
+  issued_at: string | null;   // ISO string
+  // If you later add expires_at to the view, uncomment the next line and include it in .select(...):
+  // expires_at: string | null;
 };
 
 export async function GET(
@@ -20,10 +20,9 @@ export async function GET(
 
   const supabase = getServerSupabase();
 
-  // Let Supabase infer the response type; ask only for columns that exist in the view
   const { data, error } = await supabase
-    .from('certificates') // <-- the VIEW
-    .select('status, org_name, issued_at')
+    .from('certificates') // <-- the VIEW, not the base table
+    .select('status, org_name, issued_at') // add 'expires_at' here if you expose it in the view
     .eq('serial', serial)
     .maybeSingle<CertView>();
 
@@ -33,7 +32,12 @@ export async function GET(
   if (!error && data) {
     const statusLower = (data.status ?? '').toLowerCase();
     valid = statusLower === 'active';
-    // If you add expires_at in the view later, you can gate here too.
+
+    // If you add expires_at later, gate validity here too:
+    // if (data.expires_at) {
+    //   const exp = new Date(data.expires_at);
+    //   if (!Number.isNaN(exp.getTime()) && exp <= new Date()) valid = false;
+    // }
   }
 
   const label = valid ? 'Valid' : 'Not Valid';
