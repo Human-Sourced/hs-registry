@@ -1,103 +1,150 @@
-import Image from "next/image";
+// Minimal homepage for registry.human-sourced.com
+// Purpose: let anyone quickly search or verify a certificate.
+// Styling assumes Tailwind is already configured (it is in your project).
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+export default function HomePage() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <main className="min-h-screen bg-white">
+      {/* Top bar */}
+      <header className="border-b">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-black" aria-hidden />
+            <span className="text-lg font-semibold">Human‑Sourced Registry</span>
+          </div>
+          <nav className="text-sm">
+            <a
+              href="https://human-sourced.com"
+              className="text-blue-600 hover:underline"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Main Site →
+            </a>
+          </nav>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      </header>
+
+      {/* Hero / Search */}
+      <section className="max-w-5xl mx-auto px-4 py-12">
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
+          Verify a Human‑Sourced certification
+        </h1>
+        <p className="mt-2 text-gray-600 max-w-2xl">
+          This is the official registry. Search certified organizations or check a certificate by serial.
+        </p>
+
+        {/* Search form: GET → /registry?q=... */}
+        <form
+          action="/registry"
+          method="get"
+          className="mt-6 flex flex-col sm:flex-row gap-3"
+          aria-label="Search certified organizations"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+          <input
+            type="search"
+            name="q"
+            required
+            placeholder="Search by organization name or serial (e.g., HS‑C‑2025‑000001)…"
+            className="flex-1 min-w-[260px] rounded-xl border px-4 py-3 text-base"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+          <button
+            type="submit"
+            className="rounded-xl bg-black text-white px-5 py-3 text-base font-medium"
+          >
+            Search Registry
+          </button>
+        </form>
+
+        {/* Quick actions */}
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <a
+            href="/registry"
+            className="rounded-2xl border px-4 py-4 hover:shadow-sm transition"
+          >
+            <div className="text-sm text-gray-500">Browse</div>
+            <div className="text-lg font-semibold">View all certified orgs</div>
+            <div className="mt-1 text-sm text-gray-600">
+              Filter by status, sort by date, and open certificates.
+            </div>
+          </a>
+
+          <div className="rounded-2xl border px-4 py-4">
+            <div className="text-sm text-gray-500">Verify by Serial</div>
+            <form
+              action="/api/v1/verify"
+              method="get"
+              className="mt-2 flex gap-2"
+              aria-label="Verify by serial number"
+            >
+              <input
+                type="text"
+                name="serial"
+                placeholder="HS‑C‑YYYY‑NNNNNN"
+                className="flex-1 rounded-xl border px-3 py-2 text-sm"
+                required
+              />
+              <button
+                type="submit"
+                className="rounded-xl bg-black text-white px-3 py-2 text-sm font-medium"
+              >
+                Check
+              </button>
+            </form>
+            <p className="mt-2 text-xs text-gray-500">
+              Returns JSON with validity, status, and issue date.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border px-4 py-4">
+            <div className="text-sm text-gray-500">Certificate Lookup</div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const input = (e.currentTarget.elements.namedItem('serial') as HTMLInputElement);
+                if (input?.value) {
+                  const s = encodeURIComponent(input.value.trim());
+                  window.location.href = `/certificate/${s}`;
+                }
+              }}
+              className="mt-2 flex gap-2"
+              aria-label="Open certificate page by serial number"
+            >
+              <input
+                type="text"
+                name="serial"
+                placeholder="HS‑C‑YYYY‑NNNNNN"
+                className="flex-1 rounded-xl border px-3 py-2 text-sm"
+                required
+              />
+              <button
+                type="submit"
+                className="rounded-xl bg-black text-white px-3 py-2 text-sm font-medium"
+              >
+                Open
+              </button>
+            </form>
+            <p className="mt-2 text-xs text-gray-500">
+              Opens the public certificate page with badge and QR.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t">
+        <div className="max-w-5xl mx-auto px-4 py-6 text-sm text-gray-600 flex flex-wrap items-center gap-3 justify-between">
+          <div>© {new Date().getFullYear()} Human‑Sourced</div>
+          <div className="flex gap-4">
+            <a href="/registry" className="hover:underline">Registry</a>
+            <a href="https://human-sourced.com" className="hover:underline" target="_blank" rel="noreferrer">
+              Learn about the Standard
+            </a>
+          </div>
+        </div>
       </footer>
-    </div>
+    </main>
   );
 }
