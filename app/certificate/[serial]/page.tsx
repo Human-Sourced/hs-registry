@@ -6,15 +6,27 @@ export const dynamic = 'force-dynamic';
 type CertRow = {
   serial: string;
   org_name: string;
-  // keep status flexible because the view lower-cases enum values
-  status: string; // 'active' | 'revoked' | 'expired' | 'conditional' | 'suspended'
+  status: string; // lowercased text from the view
   issued_at: string;
 };
+
+// Safe error-to-string helper (no `any`)
+function getErrMessage(e: unknown): string {
+  if (e && typeof e === 'object' && 'message' in e) {
+    const m = (e as { message?: unknown }).message;
+    return typeof m === 'string' ? m : JSON.stringify(m);
+  }
+  try {
+    return String(e);
+  } catch {
+    return 'Unknown error';
+  }
+}
 
 export default async function CertificatePage({
   params,
 }: {
-  // <-- Next 15 in your setup expects params as a Promise
+  // Your project expects Promise params (per previous build error)
   params: Promise<{ serial: string }>;
 }) {
   const { serial } = await params;
@@ -41,7 +53,7 @@ export default async function CertificatePage({
     return (
       <main className="p-8">
         <h1 className="text-2xl font-semibold">Database error</h1>
-        <p className="mt-2 text-gray-500">{String((error as any).message ?? error)}</p>
+        <p className="mt-2 text-gray-500">{getErrMessage(error)}</p>
       </main>
     );
   }
@@ -68,7 +80,7 @@ export default async function CertificatePage({
         <div><strong>Issued:</strong> {new Date(data.issued_at).toLocaleString()}</div>
       </section>
 
-      {/* Using Next/Image to satisfy lint rule */}
+      {/* Using Next/Image to satisfy the lint rule */}
       <Image alt="Verification Badge" src={badgeUrl} width={240} height={240} />
       <Image alt="QR Code" src={qrUrl} width={240} height={240} />
     </main>
