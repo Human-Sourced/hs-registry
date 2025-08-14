@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
@@ -10,18 +10,14 @@ type CertView = {
   issued_at: string | null;
 };
 
-export async function GET(
-  _req: Request,
-  { params }: { params: { serial: string } }
-) {
-  const raw = params.serial ?? '';
+export async function GET(req: NextRequest, context: { params: { serial: string } }) {
+  const raw = context.params.serial ?? '';
   const serial = decodeURIComponent(raw).replace(/\.svg$/i, '');
 
   let supabase;
   try {
     supabase = getServerSupabase();
   } catch {
-    // no unused variable; no `any`
     return new NextResponse(
       `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="420" height="80" role="img" aria-label="Human‑Sourced: Error">
@@ -30,10 +26,7 @@ export async function GET(
     Human‑Sourced: Config error (Supabase env vars)
   </text>
 </svg>`,
-      {
-        status: 500,
-        headers: { 'Content-Type': 'image/svg+xml; charset=utf-8', 'Cache-Control': 'no-store' },
-      }
+      { status: 500, headers: { 'Content-Type': 'image/svg+xml; charset=utf-8', 'Cache-Control': 'no-store' } }
     );
   }
 
@@ -52,10 +45,7 @@ export async function GET(
     Human‑Sourced: DB error
   </text>
 </svg>`,
-      {
-        status: 502,
-        headers: { 'Content-Type': 'image/svg+xml; charset=utf-8', 'Cache-Control': 'no-store' },
-      }
+      { status: 502, headers: { 'Content-Type': 'image/svg+xml; charset=utf-8', 'Cache-Control': 'no-store' } }
     );
   }
 
