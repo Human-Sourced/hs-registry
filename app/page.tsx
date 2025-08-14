@@ -1,6 +1,5 @@
-// Minimal homepage for registry.human-sourced.com
-// Purpose: let anyone quickly search or verify a certificate.
-// Styling assumes Tailwind is already configured (it is in your project).
+// app/page.tsx
+import CertificateLookup from './components/CertificateLookup';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,38 +97,8 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="rounded-2xl border px-4 py-4">
-            <div className="text-sm text-gray-500">Certificate Lookup</div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const input = (e.currentTarget.elements.namedItem('serial') as HTMLInputElement);
-                if (input?.value) {
-                  const s = encodeURIComponent(input.value.trim());
-                  window.location.href = `/certificate/${s}`;
-                }
-              }}
-              className="mt-2 flex gap-2"
-              aria-label="Open certificate page by serial number"
-            >
-              <input
-                type="text"
-                name="serial"
-                placeholder="HS‑C‑YYYY‑NNNNNN"
-                className="flex-1 rounded-xl border px-3 py-2 text-sm"
-                required
-              />
-              <button
-                type="submit"
-                className="rounded-xl bg-black text-white px-3 py-2 text-sm font-medium"
-              >
-                Open
-              </button>
-            </form>
-            <p className="mt-2 text-xs text-gray-500">
-              Opens the public certificate page with badge and QR.
-            </p>
-          </div>
+          {/* Client-side component for interactive navigation */}
+          <CertificateLookup />
         </div>
       </section>
 
